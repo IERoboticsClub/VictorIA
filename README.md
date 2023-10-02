@@ -1,3 +1,5 @@
+![hacktoberfest](https://img.shields.io/badge/Hacktoberfest-2023-blueviolet?style=for-the-badge&logo=appveyor)
+
 # VictorIA
 
 VictorIA is an intelligent robotic player from the IE Robotics & AI Club that is powered by AI to play a series of different physical games through the use of the dobot magician robotic arms. 
