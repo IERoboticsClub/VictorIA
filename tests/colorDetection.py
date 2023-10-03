@@ -53,8 +53,8 @@ while True:
                     video, (x, y), (x + w, y + h), (255, 0, 255), 3
                 )  # Drawing magenta rectangles
 
-    cv2.imshow("Green Mask", green_mask)  # Displaying green mask image
-    cv2.imshow("Magenta Mask", magenta_mask)  # Displaying magenta mask image
+    # cv2.imshow("Green Mask", green_mask)  # Displaying green mask image
+    # cv2.imshow("Magenta Mask", magenta_mask)  # Displaying magenta mask image
     cv2.imshow("Window", video)  # Displaying webcam image
 
     if cv2.waitKey(1) & 0xFF == ord("q"):
