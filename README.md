@@ -30,7 +30,7 @@ Follow the steps in `CONTRIBUTING.md` to contribute to this project.
 ## How can you contribute?
 There are two ways you can contribute in the project:
 
-1. **Computer Vision**: We have 2 notebooks in the folder tests that perform circle detection and color detection respectively. You can try to improve or create you own file to solve the computer vision part. We want that the output of these part is a matrix representing the state of the board
+1. **Computer Vision**:  we have 2 notebooks in the tests folder that perform circle detection and color detection respectively. You can try to improve or create your own file to solve the computer vision part. We want the output of this part to be a matrix representing the state of the board.
 ![computervision](https://github.com/IERoboticsClub/VictorIA/assets/63413550/0847cd5e-caad-4392-a4a7-b3a9a1277bf1)
 
 2. **The resolution algorithm**: we did not start this part, so you can come with any idea: MiniMax, MCTS.... We are thinking of creating different levels of difficulty, so maybe you can use the same method with different heuristics depending on the level. We want that, given the representative matrix of the board, the algorithm you program, gives as output the column where the new chips go. 
