@@ -97,7 +97,6 @@ def draw_circles_from_video(img):
                 )
             elif acc < 21:
                 cv2.putText(
-                    
                     img,
                     str(acc),
                     (a, b),
@@ -139,8 +138,52 @@ def draw_circles_from_video(img):
 cam = cv2.VideoCapture(0)
 acc = 0
 
+# Specifying upper and lower ranges of green color to detect in HSV format
+lower_green = np.array([25, 40, 40])
+upper_green = np.array([90, 255, 255])
+
+# Specifying upper and lower ranges of magenta color to detect in HSV format
+lower_magenta = np.array([136, 87, 111])
+upper_magenta = np.array([180, 255, 255])
+
 while True:
-    check, video = cam.read()
+    success, video = cam.read()  # Reading webcam footage
+
+    img_hsv = cv2.cvtColor(video, cv2.COLOR_BGR2HSV)  # Convert BGR image to HSV format
+
+    # Masking the image to find the green color
+    green_mask = cv2.inRange(img_hsv, lower_green, upper_green)
+
+    # Masking the image to find the magenta color
+    magenta_mask = cv2.inRange(img_hsv, lower_magenta, upper_magenta)
+
+    # Finding contours in the green mask image
+    green_contours, _ = cv2.findContours(
+        green_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+    )
+
+    # Finding contours in the magenta mask image
+    magenta_contours, _ = cv2.findContours(
+        magenta_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+    )
+
+    # Finding position of all green contours
+    if len(green_contours) != 0:
+        for green_contour in green_contours:
+            if cv2.contourArea(green_contour) > 500:
+                x, y, w, h = cv2.boundingRect(green_contour)
+                cv2.rectangle(
+                    video, (x, y), (x + w, y + h), (0, 255, 0), 3
+                )  # Drawing green rectangles
+
+    # Finding position of all magenta contours
+    if len(magenta_contours) != 0:
+        for magenta_contour in magenta_contours:
+            if cv2.contourArea(magenta_contour) > 500:
+                x, y, w, h = cv2.boundingRect(magenta_contour)
+                cv2.rectangle(
+                    video, (x, y), (x + w, y + h), (255, 0, 255), 3
+                )  # Drawing magenta rectangles
     if acc == 0:
         img = video.copy()
         src_pts = get_four_points(img)

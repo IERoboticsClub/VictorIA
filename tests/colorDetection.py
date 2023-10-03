@@ -12,10 +12,10 @@ lower_magenta = np.array([136, 87, 111])
 upper_magenta = np.array([180, 255, 255])
 
 # Capturing webcam footage
-webcam_video = cv2.VideoCapture(0)
+cam = cv2.VideoCapture(0)
 
 while True:
-    success, video = webcam_video.read()  # Reading webcam footage
+    success, video = cam.read()  # Reading webcam footage
 
     img_hsv = cv2.cvtColor(video, cv2.COLOR_BGR2HSV)  # Convert BGR image to HSV format
 
@@ -60,5 +60,5 @@ while True:
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break  # Exit the loop when 'q' is pressed
 
-webcam_video.release()
+cam.release()
 cv2.destroyAllWindows()
