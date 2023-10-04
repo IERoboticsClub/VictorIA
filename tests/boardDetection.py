@@ -137,6 +137,8 @@ def draw_circles_from_video(img):
 
 # open camera
 cam = cv2.VideoCapture(0)
+cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 acc = 0
 
 while True:
@@ -164,3 +166,6 @@ while True:
     key = cv2.waitKey(1)
     if key == 27:
         break
+
+cam.release()
+cv2.destroyAllWindows()

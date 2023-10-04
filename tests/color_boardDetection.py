@@ -136,6 +136,8 @@ def draw_circles_from_video(img):
 
 # open camera
 cam = cv2.VideoCapture(0)
+cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 acc = 0
 
 # Specifying upper and lower ranges of green color to detect in HSV format
@@ -146,11 +148,7 @@ upper_green = np.array([90, 255, 255])
 lower_magenta = np.array([136, 87, 111])
 upper_magenta = np.array([180, 255, 255])
 
-while True:
-    success, video = cam.read()  # Reading webcam footage
-
-    img_hsv = cv2.cvtColor(video, cv2.COLOR_BGR2HSV)  # Convert BGR image to HSV format
-
+def color_detector():
     # Masking the image to find the green color
     green_mask = cv2.inRange(img_hsv, lower_green, upper_green)
 
@@ -184,6 +182,13 @@ while True:
                 cv2.rectangle(
                     video, (x, y), (x + w, y + h), (255, 0, 255), 3
                 )  # Drawing magenta rectangles
+
+while True:
+    success, video = cam.read()  # Reading webcam footage
+
+    img_hsv = cv2.cvtColor(video, cv2.COLOR_BGR2HSV)  # Convert BGR image to HSV format
+
+    color_detector()
     if acc == 0:
         img = video.copy()
         src_pts = get_four_points(img)
@@ -200,10 +205,12 @@ while True:
     img_out = cv2.warpPerspective(video, h, (width, height))
 
     detected_circles, _withCircles = draw_circles_from_video(img_out)
-    cv2.imshow("video", video)
-    cv2.imshow("With circles", _withCircles)
+    cv2.imshow("Circles", _withCircles)
     acc += 1
 
     key = cv2.waitKey(1)
     if key == 27:
         break
+
+cam.release()
+cv2.destroyAllWindows()

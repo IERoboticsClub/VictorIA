@@ -13,6 +13,8 @@ upper_magenta = np.array([180, 255, 255])
 
 # Capturing webcam footage
 cam = cv2.VideoCapture(0)
+cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
 while True:
     success, video = cam.read()  # Reading webcam footage
@@ -57,7 +59,8 @@ while True:
     # cv2.imshow("Magenta Mask", magenta_mask)  # Displaying magenta mask image
     cv2.imshow("Window", video)  # Displaying webcam image
 
-    if cv2.waitKey(1) & 0xFF == ord("q"):
+    key = cv2.waitKey(1)
+    if key == 27:  # Exit on ESC
         break  # Exit the loop when 'q' is pressed
 
 cam.release()
