@@ -42,18 +42,20 @@ while True:
         for green_contour in green_contours:
             if cv2.contourArea(green_contour) > 500:
                 x, y, w, h = cv2.boundingRect(green_contour)
-                cv2.rectangle(
-                    video, (x, y), (x + w, y + h), (0, 255, 0), 3
-                )  # Drawing green rectangles
+                (x,y), radius = cv2.minEnclosingCircle(green_contour)
+                center = (int(x),int(y))
+                radius = int(radius)
+                cv2.circle(video,center,radius,(0,255,0),3) # Drawing green circles
 
     # Finding position of all magenta contours
     if len(magenta_contours) != 0:
         for magenta_contour in magenta_contours:
             if cv2.contourArea(magenta_contour) > 500:
                 x, y, w, h = cv2.boundingRect(magenta_contour)
-                cv2.rectangle(
-                    video, (x, y), (x + w, y + h), (255, 0, 255), 3
-                )  # Drawing magenta rectangles
+                (x,y), radius = cv2.minEnclosingCircle(magenta_contour)
+                center = (int(x),int(y))
+                radius = int(radius)
+                cv2.circle(video,center,radius,(255,0,255),3) # Drawing magenta circles
 
     # cv2.imshow("Green Mask", green_mask)  # Displaying green mask image
     # cv2.imshow("Magenta Mask", magenta_mask)  # Displaying magenta mask image
@@ -61,7 +63,7 @@ while True:
 
     key = cv2.waitKey(1)
     if key == 27:  # Exit on ESC
-        break  # Exit the loop when 'q' is pressed
+        break
 
 cam.release()
 cv2.destroyAllWindows()

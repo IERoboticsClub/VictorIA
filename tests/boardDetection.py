@@ -80,7 +80,7 @@ def draw_circles_from_video(img):
             a, b = pt[0], pt[1]
 
             # Draw the circumference of the circle.
-            cv2.circle(img, (a, b), 40, (0, 255, 0), 2)
+            cv2.circle(img, (a, b), 40, (0, 0, 0), 2)
 
             # Draw a small circle (of radius 1) to show the center.
             cv2.circle(img, (a, b), 1, (0, 0, 255), 3)
