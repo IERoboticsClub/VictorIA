@@ -1,6 +1,13 @@
 import cv2
 import numpy as np
 
+# Specifying upper and lower ranges of green color to detect in HSV format
+lower_green = np.array([25, 40, 40])
+upper_green = np.array([90, 255, 255])
+
+# Specifying upper and lower ranges of magenta color to detect in HSV format
+lower_magenta = np.array([136, 87, 111])
+upper_magenta = np.array([180, 255, 255])
 
 # get the 4 corner manually
 def get_four_points(image):
@@ -74,6 +81,45 @@ def draw_circles_from_video(img):
         detected_circles = np.uint16(np.around(detected_circles))
         detected_circles = sort_coordinates(detected_circles)
 
+        def circles2matrix(circles, img):
+            matrix = np.zeros((6, 7), dtype=np.uint8)
+            # Loop over each circle
+            num = 1
+            green = 0
+            magenta = 0
+            hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+            for x, y in circles:
+                # Extract the center pixel color in the HSV format
+                # circle_hsv = cv2.cvtColor(circle_region, cv2.COLOR_BGR2HSV)
+                hsv_pixel = np.mean(hsv_img[y - 20 : y + 20, x - 20 : x + 20], axis=(0, 1))
+                # Check if the pixel color is within the green color range
+                if (
+                    hsv_pixel[0] >= lower_green[0]
+                    and hsv_pixel[0] <= upper_green[0]
+                    and hsv_pixel[1] >= lower_green[1]
+                    and hsv_pixel[1] <= upper_green[1]
+                    and hsv_pixel[2] >= lower_green[2]
+                    and hsv_pixel[2] <= upper_green[2]
+                ):
+                    matrix[(num - 1) // 7][(num - 1) % 7] = "1"  # 1 = Green
+                    green += 1
+
+                if (
+                    hsv_pixel[0] >= lower_magenta[0]
+                    and hsv_pixel[0] <= upper_magenta[0]
+                    and hsv_pixel[1] >= lower_magenta[1]
+                    and hsv_pixel[1] <= upper_magenta[1]
+                    and hsv_pixel[2] >= lower_magenta[2]
+                    and hsv_pixel[2] <= upper_magenta[2]
+                ):
+                    matrix[(num - 1) // 7][(num - 1) % 7] = "2"  # 2 = Magenta
+                    magenta += 1
+
+                num += 1
+
+            print(matrix, "\n")
+            return matrix
+
         acc = 1
         for pt in detected_circles:
             a, b = pt[0], pt[1]
@@ -83,15 +129,6 @@ def draw_circles_from_video(img):
 
             # Convert BGR to HSV color space
             pixel_value_hsv = cv2.cvtColor(np.uint8([[pixel_value]]), cv2.COLOR_BGR2HSV)
-
-            # Specifying upper and lower ranges of green color to detect in HSV format
-            lower_green = np.array([25, 40, 40])
-            upper_green = np.array([90, 255, 255])
-
-            # Specifying upper and lower ranges of magenta color to detect in HSV format
-            lower_magenta = np.array([136, 87, 111])
-            upper_magenta = np.array([180, 255, 255])
-
 
             if (pixel_value_hsv >= lower_green).all() and (
                 pixel_value_hsv <= upper_green
@@ -127,6 +164,7 @@ def draw_circles_from_video(img):
 
             acc += 1
 
+    circles2matrix(detected_circles, img_out)
     return detected_circles, img
 
 
