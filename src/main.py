@@ -1,4 +1,4 @@
-from utils import *
+from src.ComputerVision.utils import *
 
 def main():
     computer_vision()
