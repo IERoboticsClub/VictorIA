@@ -192,7 +192,6 @@ while True:
     img_out = cv2.warpPerspective(video, h, (width, height))
 
     detected_circles, _withCircles = draw_circles_from_video(img_out)
-    cv2.imshow("video", video)
     cv2.imshow("With circles", _withCircles)
     acc += 1
 
