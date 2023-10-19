@@ -1,44 +1,32 @@
 import cv2
 import numpy as np
 
-# Create a window to display the image
-cv2.namedWindow("Select Points")
+points = []
+
+
+def mouse_callback(event, x, y, flags, param):
+    global points
+    image = param
+    # If the left mouse button is clicked, add the current point to the list
+    if event == cv2.EVENT_LBUTTONDOWN:
+        points.append((x, y))
+        # Draw a circle at the current point
+        cv2.circle(image, (x, y), 5, (0, 0, 255), -1)
+        # Update the display
+        cv2.imshow("Select Points", image)
 
 
 def get_four_points(image):
-    """
-    Allows the user to select four points on the provided image by clicking with the mouse.
-
-    Args:
-    image (numpy.ndarray): The input image on which points will be selected.
-
-    Returns:
-    list of tuple: A list of four tuples, each containing (x, y) coordinates of a selected point.
-    """
-    # Create a window to display the image
-    cv2.namedWindow("Select Points")
-
-    # Create an empty list to store the points
-    points = []
-
-    # Define the callback function for mouse events
-    def mouse_callback(event, x, y, flags, param):
-        # If the left mouse button is clicked, add the current point to the list
-        if event == cv2.EVENT_LBUTTONDOWN:
-            points.append((x, y))
-            # Draw a circle at the current point
-            cv2.circle(image, (x, y), 5, (0, 255, 0), -1)
-            # Update the display
-            cv2.imshow("Select Points", image)
-
+    global points
     # Display the image and wait for mouse clicks
     cv2.imshow("Select Points", image)
-    cv2.setMouseCallback("Select Points", mouse_callback)
+    cv2.setMouseCallback("Select Points", mouse_callback, image)
     cv2.waitKey(0)
 
     # Check if exactly 4 points were selected
     if len(points) != 4:
         print("Error: Please select exactly 4 points")
+        cv2.destroyAllWindows()
         return None
 
     # Close the window
@@ -60,7 +48,7 @@ def sort_coordinates(coord):
     """
     detected_circles = [[val[0], val[1]] for val in coord[0]]
     detected_circles = sorted(detected_circles, key=lambda x: x[1])
-    coord2 = [detected_circles[7 * i : 7 * (i + 1)] for i in range(0, 6)]
+    coord2 = [detected_circles[7 * i: 7 * (i + 1)] for i in range(0, 6)]
     coord3 = [sorted(val, key=lambda x: x[0]) for val in coord2]
     coord4 = [val for sublist in coord3 for val in sublist]
 
@@ -69,21 +57,19 @@ def sort_coordinates(coord):
 
 def draw_circles_from_video(img):
     """
-    Detects and draws circles on an image.
-
-    Args:
-    img (numpy.ndarray): The input image on which circles will be detected and drawn.
+    Detects and draws circles in a grayscale image and categorizes them as either green or magenta based on color.
+    
+    Parameters:
+    - img (numpy.ndarray): Input image in BGR format.
 
     Returns:
-    tuple: A tuple containing two elements - a list of detected circles and the image with circles drawn.
+    - matrix (numpy.ndarray): A 2D array (6x7) representing the circle categorization:
+        - "1" indicates a green circle.
+        - "2" indicates a magenta circle.
+        - "0" indicates no circle detected in that position.
+    - detected_circles (numpy.ndarray): Information about the detected circles, including their positions and radii.
+    - img (numpy.ndarray): The input image with circles drawn on it for visualization.
     """
-    # Specifying upper and lower ranges of green color to detect in HSV format
-    lower_green = np.array([25, 40, 40])
-    upper_green = np.array([90, 255, 255])
-
-    # Specifying upper and lower ranges of magenta color to detect in HSV format
-    lower_magenta = np.array([136, 87, 111])
-    upper_magenta = np.array([180, 255, 255])
 
     # Convert to grayscale
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -105,54 +91,16 @@ def draw_circles_from_video(img):
         maxRadius=55,
     )
 
+    matrix = np.zeros((6, 7), dtype=np.uint8)
+
     # Draw circles that are detected.
     if detected_circles is not None:
         # Convert the circle parameters a, b and r to integers.
         detected_circles = np.uint16(np.around(detected_circles))
         detected_circles = sort_coordinates(detected_circles)
 
-        def circles2matrix(circles, img):
-            matrix = np.zeros((6, 7), dtype=np.uint8)
-            # Loop over each circle
-            num = 1
-            green = 0
-            magenta = 0
-            hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-            for x, y in circles:
-                # Extract the center pixel color in the HSV format
-                # circle_hsv = cv2.cvtColor(circle_region, cv2.COLOR_BGR2HSV)
-                hsv_pixel = np.mean(
-                    hsv_img[y - 20 : y + 20, x - 20 : x + 20], axis=(0, 1)
-                )
-                # Check if the pixel color is within the green color range
-                if (
-                    hsv_pixel[0] >= lower_green[0]
-                    and hsv_pixel[0] <= upper_green[0]
-                    and hsv_pixel[1] >= lower_green[1]
-                    and hsv_pixel[1] <= upper_green[1]
-                    and hsv_pixel[2] >= lower_green[2]
-                    and hsv_pixel[2] <= upper_green[2]
-                ):
-                    matrix[(num - 1) // 7][(num - 1) % 7] = "1"  # 1 = Green
-                    green += 1
-
-                if (
-                    hsv_pixel[0] >= lower_magenta[0]
-                    and hsv_pixel[0] <= upper_magenta[0]
-                    and hsv_pixel[1] >= lower_magenta[1]
-                    and hsv_pixel[1] <= upper_magenta[1]
-                    and hsv_pixel[2] >= lower_magenta[2]
-                    and hsv_pixel[2] <= upper_magenta[2]
-                ):
-                    matrix[(num - 1) // 7][(num - 1) % 7] = "2"  # 2 = Magenta
-                    magenta += 1
-
-                num += 1
-
-            print(matrix, "\n")
-            return matrix
-
         acc = 1
+        num = 1
         for pt in detected_circles:
             a, b = pt[0], pt[1]
 
@@ -162,19 +110,31 @@ def draw_circles_from_video(img):
             # Convert BGR to HSV color space
             pixel_value_hsv = cv2.cvtColor(np.uint8([[pixel_value]]), cv2.COLOR_BGR2HSV)
 
+            # Specifying upper and lower ranges of green color to detect in HSV format
+            lower_green = np.array([25, 40, 40])
+            upper_green = np.array([90, 255, 255])
+
+            # Specifying upper and lower ranges of magenta color to detect in HSV format
+            lower_magenta = np.array([136, 87, 111])
+            upper_magenta = np.array([180, 255, 255])
+
+            green = 0
+            magenta = 0
+
             if (pixel_value_hsv >= lower_green).all() and (
-                pixel_value_hsv <= upper_green
+                    pixel_value_hsv <= upper_green
             ).all():
                 border_color = (0, 255, 0)  # Green
-                label = "G|"  # 'G' for green
+                matrix[(num - 1) // 7][(num - 1) % 7] = "1"  # 1 = Green
+                green += 1
             elif (pixel_value_hsv >= lower_magenta).all() and (
-                pixel_value_hsv <= upper_magenta
+                    pixel_value_hsv <= upper_magenta
             ).all():
                 border_color = (255, 0, 255)  # Magenta
-                label = "M|"  # 'M' for magenta
+                matrix[(num - 1) // 7][(num - 1) % 7] = "2"  # 2 = Magenta
+                magenta += 1
             else:
                 border_color = (0, 0, 0)  # Black
-                label = ""  # No label
 
             # Draw the circumference of the circle with the determined border color
             cv2.circle(img, (a, b), 40, border_color, 2)
@@ -185,7 +145,7 @@ def draw_circles_from_video(img):
             # Draw a number in the center of the circle along with the label ('B' or 'M')
             cv2.putText(
                 img,
-                f"{label}{acc}",
+                f"{acc}",
                 (a, b),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 1,
@@ -195,19 +155,20 @@ def draw_circles_from_video(img):
             )
 
             acc += 1
+            num += 1
 
-    circles2matrix(detected_circles, img)
-    return detected_circles, img
+    print(matrix, "\n")
+    return matrix, detected_circles, img
 
 
 def computer_vision():
     """
-    Performs computer vision tasks including point selection, homography transformation, and circle detection on a live camera feed.
+    Performs computer vision tasks including point selection, homography transformation,
+    and circle detection on a live camera feed.
 
     Usage:
     - Run the function to open the camera feed and perform the tasks.
     - Press the 'Esc' key to exit the camera feed.
-
     """
     # Open camera
     cam = cv2.VideoCapture(0)
@@ -231,7 +192,7 @@ def computer_vision():
 
         h, status = cv2.findHomography(src_pts, dst_pts)
         img_out = cv2.warpPerspective(video, h, (width, height))
-        detected_circles, _withCircles = draw_circles_from_video(img_out)
+        matrix, detected_circles, _withCircles = draw_circles_from_video(img_out)
         cv2.imshow("With circles", _withCircles)
         acc += 1
 
