@@ -5,7 +5,28 @@ points = []
 
 
 def mouse_callback(event, x, y, flags, param):
-    global points
+    """
+    Callback function for mouse events.
+
+    This function is intended to be used with the cv2.setMouseCallback method
+    to handle mouse events such as clicking.
+
+    Parameters:
+        event (int): The type of mouse event (e.g., cv2.EVENT_LBUTTONDOWN).
+        x (int): The x-coordinate of the mouse cursor.
+        y (int): The y-coordinate of the mouse cursor.
+        flags (int): Any special flags associated with the event.
+        param: An image to which the mouse events are applied.
+
+    Returns:
+        None
+
+    Example:
+        cv2.setMouseCallback("Select Points", mouse_callback, image)
+
+    Note:
+        The 'points' list is assumed to be a global variable in this context.
+    """
     image = param
     # If the left mouse button is clicked, add the current point to the list
     if event == cv2.EVENT_LBUTTONDOWN:
@@ -17,7 +38,17 @@ def mouse_callback(event, x, y, flags, param):
 
 
 def get_four_points(image):
-    global points
+    """
+    This function displays the provided image and waits for the user to click
+    four points using the mouse. It uses the 'mouse_callback' function to handle
+    mouse events.
+
+    Parameters:
+        image: The image on which to select points.
+
+    Returns:
+        list of tuple: A list of four (x, y) coordinates representing the selected points.
+    """
     # Display the image and wait for mouse clicks
     cv2.imshow("Select Points", image)
     cv2.setMouseCallback("Select Points", mouse_callback, image)
@@ -40,11 +71,11 @@ def sort_coordinates(coord):
     """
     Sorts a list of coordinates by y-coordinate and then by x-coordinate.
 
-    Args:
-    coord (list of tuple): The list of coordinates to be sorted.
+    Parameters:
+        coord (list of tuple): The list of coordinates to be sorted.
 
     Returns:
-    list of tuple: The sorted list of coordinates.
+        list of tuple: The sorted list of coordinates.
     """
     detected_circles = [[val[0], val[1]] for val in coord[0]]
     detected_circles = sorted(detected_circles, key=lambda x: x[1])
@@ -60,15 +91,15 @@ def draw_circles_from_video(img):
     Detects and draws circles in a grayscale image and categorizes them as either green or magenta based on color.
     
     Parameters:
-    - img (numpy.ndarray): Input image in BGR format.
+        img (numpy.ndarray): Input image in BGR format.
 
     Returns:
-    - matrix (numpy.ndarray): A 2D array (6x7) representing the circle categorization:
-        - "1" indicates a green circle.
-        - "2" indicates a magenta circle.
-        - "0" indicates no circle detected in that position.
-    - detected_circles (numpy.ndarray): Information about the detected circles, including their positions and radii.
-    - img (numpy.ndarray): The input image with circles drawn on it for visualization.
+        matrix (numpy.ndarray): A 2D array (6x7) representing the circle categorization:
+            "1" indicates a green circle.
+            "2" indicates a magenta circle.
+            "0" indicates no circle detected in that position.
+        detected_circles (numpy.ndarray): Information about the detected circles, including their positions and radii.
+        img (numpy.ndarray): The input image with circles drawn on it for visualization.
     """
 
     # Convert to grayscale
@@ -167,8 +198,8 @@ def computer_vision():
     and circle detection on a live camera feed.
 
     Usage:
-    - Run the function to open the camera feed and perform the tasks.
-    - Press the 'Esc' key to exit the camera feed.
+        Run the function to open the camera feed and perform the tasks.
+        Press the 'Esc' key to exit the camera feed.
     """
     # Open camera
     cam = cv2.VideoCapture(0)
