@@ -1,5 +1,7 @@
 /venv
+
+*.pyc
+
 boardDetection.py
 colorDetection.py
 color_boardDetection.py
-minimax.py

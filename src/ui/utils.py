@@ -1,265 +1,322 @@
-import numpy as np
-import streamlit as st
+class ConnectFour:
+    """
+    ConnectFour class represents the Connect Four game.
 
+    Attributes:
+        - rows (int): The number of rows in the game board.
+        - columns (int): The number of columns in the game board.
+        - board (list): The game board represented as a 2D list.
+        - turn (str): The current player's turn ("X" or "O").
+        - depth (int): The depth for the minimax algorithm.
 
-def draw(num_columns, num_rows):
-    st.title("Board")
-    columns = st.columns(num_columns)
-    acc_col = -1
-    acc_row = -1
-    while acc_col < 6:
-        for col in columns:
-            if acc_row > 4:
-                acc_row = -1
+    Methods:
+        - insert_disc(column, player): Inserts a disc into the specified column for the given player.
+        - check_winner(player): Checks if the given player has won the game.
+        - greedy_move(): Determines the best move using a greedy strategy.
+        - minimax_move(): Determines the best move using the minimax algorithm.
+        - minimax(depth, maximizing_player): Performs the minimax algorithm to evaluate the game board.
+        - get_next_open_row(col): Returns the next open row in the specified column.
+        - is_col_full(col): Checks if the specified column is full.
+        - is_board_full(): Checks if the game board is full.
+        - evaluate_board(board): Evaluates the game board and returns a score.
+        - score_position(position): Scores a position based on the number of "O" and "X" in it.
+        - simulate_move(col, player): Simulates a move by inserting a disc into the specified column for the given player.
+    """
 
-            acc_col += 1
-            with col:
-                for circle in range(num_rows):
-                    acc_row += 1
-                    if st.session_state.board[acc_row][acc_col] == 1:  # player
-                        st.markdown(
-                            f'<div style="width: 50px; height: 50px; background-color: green; border-radius: 50%; margin: 10px;"></div>',
-                            unsafe_allow_html=True,
-                        )
-                    elif st.session_state.board[acc_row][acc_col] == 2:  # machine
-                        st.markdown(
-                            f'<div style="width: 50px; height: 50px; background-color: red; border-radius: 50%; margin: 10px;"></div>',
-                            unsafe_allow_html=True,
-                        )
-                    else:
-                        st.markdown(
-                            f'<div style="width: 50px; height: 50px; background-color: grey; border-radius: 50%; margin: 10px;"></div>',
-                            unsafe_allow_html=True,
-                        )
+    def __init__(self):
+        self.rows = 6
+        self.columns = 7
+        self.board = [[" " for _ in range(self.columns)] for _ in range(self.rows)]
+        self.turn = "X"  # X will start
+        self.depth = 3  # Depth for the minimax algorithm
 
+    def insert_disc(self, column, player):
+        """
+        Inserts a disc into the specified column for the given player.
 
-def machine_moves():
-    # random move
-    col = minimax(st.session_state.board, 5, -np.Inf, np.Inf, True)[0]
+        Args:
+            - column (int): The column to insert the disc into.
+            - player (str): The player ("X" or "O") who is inserting the disc.
 
-    for row in range(5, -1, -1):
+        Returns:
+            - bool: True if the disc was successfully inserted, False otherwise.
+
+        O(n) time complexity
+        """
+        if self.board[0][column] != " ":
+            return False  # Column is full
+
+        for row in range(self.rows - 1, -1, -1):
+            if self.board[row][column] == " ":
+                self.board[row][column] = player
+                return True
+        return False
+
+    def check_winner(self, player):
+        """
+        Checks for a win condition in four different ways, corresponding to horizontal, vertical, and two diagonal directions.
+
+        Args:
+            - player (str): The player ("X" or "O") to check for a win.
+
+        Returns:
+            - bool: True if the player has won, False otherwise.
+
+        O(n^2) time complexity
+        """
+        # Check horizontal, vertical, and diagonals for a win
+        for row in range(self.rows):
+            for col in range(self.columns - 3):
+                if all(self.board[row][c] == player for c in range(col, col + 4)):
+                    return True
+
+        for col in range(self.columns):
+            for row in range(self.rows - 3):
+                if all(self.board[r][col] == player for r in range(row, row + 4)):
+                    return True
+
+        for row in range(self.rows - 3):
+            for col in range(self.columns - 3):
+                if all(self.board[row + i][col + i] == player for i in range(4)):
+                    return True
+
+        for row in range(3, self.rows):
+            for col in range(self.columns - 3):
+                if all(self.board[row - i][col + i] == player for i in range(4)):
+                    return True
+
+        return False
+
+    def greedy_move(self):
+        """
+        Determines the best move using a greedy strategy.
+
+        Returns:
+            - int: The column index of the best move.
+
+        O(n^2) time complexity
+        """
+        # CHeck if the player can win in the next move
+        for col in range(self.columns):
+            if self.simulate_move(col, "O"):
+                return col
+
+        # Block the other player from winning
+        for col in range(self.columns):
+            if self.simulate_move(col, "X"):
+                return col
+
+        # Fallback strategy: choose the center column or the closest available column using offset
+        for offset in range(self.columns // 2 + 1):
+            for col in [self.columns // 2 + offset, self.columns // 2 - offset]:
+                if 0 <= col < self.columns and self.board[0][col] == " ":
+                    return col
+
+    def minimax_move(self):
+        """
+        Determines the best move using the minimax algorithm.
+
+        Returns:
+            - int: The column index of the best move.
+
+        O(n) time complexity
+        """
+        best_score = float("-inf")
+        best_move = None
+
+        for col in range(self.columns):
+            if not self.is_col_full(col):
+                row = self.get_next_open_row(col)
+                self.insert_disc(col, "O")
+                score = self.minimax(self.depth, False)
+                self.board[row][col] = " "  # Undo the move
+
+                if score > best_score:
+                    best_score = score
+                    best_move = col
+
+        return best_move
+
+    def minimax(self, depth, maximizing_player):
+        """
+        Performs the minimax algorithm to evaluate the game board.
+
+        Args:
+            - depth (int): The current depth of the algorithm.
+            - maximizing_player (bool): True if the current player is maximizing, False otherwise.
+
+        Returns:
+            - int: The score of the evaluated game board.
+
+        O(b^m) time complexity, where b is the branching factor and m is the maximum depth of the search tree; in this case, b = 7 and m = 3
+        """
         if (
-            st.session_state.board[row][col] == 1
-            or st.session_state.board[row][col] == 2
+            depth == 0
+            or self.check_winner("O")
+            or self.check_winner("X")
+            or self.is_board_full()
         ):
-            continue
+            return self.evaluate_board(self.board)
+
+        if maximizing_player:
+            max_eval = float("-inf")
+            for col in range(self.columns):
+                if not self.is_col_full(col):
+                    row = self.get_next_open_row(col)
+                    self.insert_disc(col, "O")
+                    eval = self.minimax(depth - 1, False)
+                    self.board[row][col] = " "  # Undo the move
+                    max_eval = max(max_eval, eval)
+            return max_eval
         else:
-            st.session_state.board[row][col] = 2
-            st.session_state.is_machine_turn = False
-            break
+            min_eval = float("inf")
+            for col in range(self.columns):
+                if not self.is_col_full(col):
+                    row = self.get_next_open_row(col)
+                    self.insert_disc(col, "X")
+                    eval = self.minimax(depth - 1, True)
+                    self.board[row][col] = " "  # Undo the move
+                    min_eval = min(min_eval, eval)
+            return min_eval
 
+    def get_next_open_row(self, col):
+        """
+        Returns the next open row in the specified column.
 
-def player_moves(col):
-    for row in range(5, -1, -1):
-        if (
-            st.session_state.board[row][col] == 1
-            or st.session_state.board[row][col] == 2
-        ):
-            pass
-        else:
-            st.session_state.board[row][col] = 1
-            st.session_state.is_machine_turn = True
-            break
+        Args:
+            - col (int): The column index.
 
+        Returns:
+            - int: The row index of the next open row.
 
-def is_col_full(board, col):
-    for row in range(5, -1, -1):
-        if board[row][col] == 1 or board[row][col] == 2:
-            pass
-        else:
-            return False
-    return True
+        O(n) time complexity
+        """
+        # Start from the bottom of the column and move upward
+        for row in range(self.rows - 1, -1, -1):
+            if self.board[row][col] == " ":
+                return row
 
+    def is_col_full(self, col):
+        """
+        Checks if the specified column is full.
 
-def winning_move(board, turn, num_columns=7, num_rows=6):
-    piece = 1 if turn == "player" else 2
+        Args:
+            - col (int): The column index.
 
-    # Check negatively sloped diaganols
-    for c in range(num_columns - 3):
-        for r in range(3, num_rows):
-            if (
-                board[r][c] == piece
-                and board[r - 1][c + 1] == piece
-                and board[r - 2][c + 2] == piece
-                and board[r - 3][c + 3] == piece
-            ):
-                return True
-    # Check positively sloped diaganols
-    for c in range(num_columns - 3):
-        for r in range(num_rows - 3):
-            if (
-                board[r][c] == piece
-                and board[r + 1][c + 1] == piece
-                and board[r + 2][c + 2] == piece
-                and board[r + 3][c + 3] == piece
-            ):
-                return True
+        Returns:
+            - bool: True if the column is full, False otherwise.
 
-    # Check vertical locations for win
-    for c in range(num_columns):
-        for r in range(num_rows - 3):
-            if (
-                board[r][c] == piece
-                and board[r + 1][c] == piece
-                and board[r + 2][c] == piece
-                and board[r + 3][c] == piece
-            ):
-                return True
-    # Check horizontal locations for win
-    for c in range(num_columns - 3):
-        for r in range(num_rows):
-            if (
-                board[r][c] == piece
-                and board[r][c + 1] == piece
-                and board[r][c + 2] == piece
-                and board[r][c + 3] == piece
-            ):
-                return True
+        O(1) time complexity
+        """
+        return self.board[0][col] != " "
 
+    def is_board_full(self):
+        """
+        Checks if the game board is full.
 
-def is_valid_location(board, col):
-    return board[5][col] == 0
+        Returns:
+            - bool: True if the game board is full, False otherwise.
 
+        O(n^2) time complexity
+        """
+        return all(cell != " " for row in self.board for cell in row)
 
-def get_next_open_row(board, col):
-    for r in range(6):
-        if board[r][col] == 0:
-            return r
+    def evaluate_board(self, board):
+        """
+        Evaluates the game board and returns a score.
 
+        Args:
+            - board (list): The game board represented as a 2D list.
 
-def evaluate(board):
-    score = 0
-    # Score horizontal
-    for r in range(6):
-        row_array = [int(i) for i in list(board[r, :])]
-        for c in range(4):
-            window = row_array[c : c + 4]
-            score += evaluate_window(window)
+        Returns:
+            - int: The score of the game board.
 
-    # Score vertical
-    for c in range(7):
-        col_array = [int(i) for i in list(board[:, c])]
-        for r in range(3):
-            window = col_array[r : r + 4]
-            score += evaluate_window(window)
+        O(n^2) time complexity (same as check_winner)
+        """
+        # Check for a win
+        if self.check_winner("O"):
+            return 10  # "O" wins, maximizing player
+        elif self.check_winner("X"):
+            return -10  # "X" wins, minimizing player
 
-    # Score positive sloped diagonal
-    for r in range(3):
-        for c in range(4):
-            window = [board[r + i][c + i] for i in range(4)]
-            score += evaluate_window(window)
+        # Count the number of open two-in-a-row, three-in-a-row, and four-in-a-row for each player
+        score = 0
 
-    # Score negative sloped diagonal
-    for r in range(3, 6):
-        for c in range(4):
-            window = [board[r - i][c + i] for i in range(4)]
-            score += evaluate_window(window)
+        # Check rows
+        for row in range(self.rows):
+            for col in range(self.columns - 3):
+                score += self.score_position(board[row][col : col + 4])
 
-    return score
+        # Check columns
+        for col in range(self.columns):
+            for row in range(self.rows - 3):
+                score += self.score_position([board[row + i][col] for i in range(4)])
 
+        # Check diagonals
+        for row in range(self.rows - 3):
+            for col in range(self.columns - 3):
+                score += self.score_position(
+                    [board[row + i][col + i] for i in range(4)]
+                )
 
-def score_position(board):
-    score = 0
-    # Score center column
-    center_array = [int(i) for i in list(board[:, 3])]
-    center_count = center_array.count(2)
-    score += center_count * 3
+        for row in range(3, self.rows):
+            for col in range(self.columns - 3):
+                score += self.score_position(
+                    [board[row - i][col + i] for i in range(4)]
+                )
 
-    # Score Horizontal
-    for r in range(6):
-        row_array = [int(i) for i in list(board[r, :])]
-        for c in range(4):
-            window = row_array[c : c + 4]
-            score += evaluate_window(window)
+        return score
 
-    # Score Vertical
-    for c in range(7):
-        col_array = [int(i) for i in list(board[:, c])]
-        for r in range(3):
-            window = col_array[r : r + 4]
-            score += evaluate_window(window)
+    def score_position(self, position):
+        """
+        Scores a position based on the number of "O" and "X" in it.
 
-    # Score posiive sloped diagonal
-    for r in range(3):
-        for c in range(4):
-            window = [board[r + i][c + i] for i in range(4)]
-            score += evaluate_window(window)
+        Args:
+            - position (list): The position to score.
 
-    # Score negative sloped diagonal
-    for r in range(3, 6):
-        for c in range(4):
-            window = [board[r - i][c + i] for i in range(4)]
-            score += evaluate_window(window)
+        Returns:
+            - int: The score of the position.
 
-    return score
+        O(1) time complexity
+        """
+        # Assign scores based on the number of "O" and "X" in a position
+        o_count = position.count("O")
+        x_count = position.count("X")
 
+        if o_count == 4:
+            return 100
+        elif o_count == 3 and x_count == 0:
+            return 5
+        elif o_count == 2 and x_count == 0:
+            return 2
+        elif x_count == 4:
+            return -100
+        elif x_count == 3 and o_count == 0:
+            return -5
+        elif x_count == 2 and o_count == 0:
+            return -2
 
-def evaluate_window(window):
-    score = 0
-    ai_piece = 2
-    opp_piece = 1
+        return 0
 
-    if window.count(ai_piece) == 4:
-        score += 100
-    elif window.count(ai_piece) == 3 and window.count(0) == 1:
-        score += 10
-    elif window.count(ai_piece) == 2 and window.count(0) == 2:
-        score += 5
-    elif window.count(ai_piece) == 1 and window.count(0) == 3:
-        score += 1
+    def simulate_move(self, col, player):
+        """
+        Simulates a move by inserting a disc into the specified column for the given player.
 
-    if window.count(opp_piece) == 3 and window.count(0) == 1:
-        score -= 80
+        Args:
+            - col (int): The column index.
+            - player (str): The player ("X" or "O") who is simulating the move.
 
-    return score
+        Returns:
+            - bool: True if the move results in a win, False otherwise.
 
-
-def minimax(board, depth, alpha, beta, maximizingPlayer):
-    if depth == 0:
-        return -1, evaluate(board)
-
-    if winning_move(board, 2):
-        return -1, 100000000000000
-    elif winning_move(board, 1):
-        return -1, -10000000000000
-
-    valid_locations = [c for c in range(7) if is_valid_location(board, c)]
-
-    if len(valid_locations) == 0 or depth == 0:
-        return -1, score_position(board)
-
-    if maximizingPlayer:
-        value = -np.Inf
-        column = np.random.choice(valid_locations)
-        for col in valid_locations:
-            row = get_next_open_row(board, col)
-            b_copy = board.copy()
-            drop_piece(b_copy, row, col, 2)
-            new_score = minimax(b_copy, depth - 1, alpha, beta, False)[1]
-            if new_score > value:
-                value = new_score
-                column = col
-            alpha = max(alpha, value)
-            if alpha >= beta:
+        O(n) time complexity
+        """
+        for row in range(self.rows - 1, -1, -1):
+            if self.board[row][col] == " ":
+                self.board[row][col] = player
+                win = self.check_winner(player)
+                self.board[row][col] = " "  # Undo the move
+                if win:
+                    return True
                 break
-        return column, value
-
-    else:  # Minimizing player
-        value = np.Inf
-        column = np.random.choice(valid_locations)
-        for col in valid_locations:
-            row = get_next_open_row(board, col)
-            b_copy = board.copy()
-            drop_piece(b_copy, row, col, 1)
-            new_score = minimax(b_copy, depth - 1, alpha, beta, True)[1]
-            if new_score < value:
-                value = new_score
-                column = col
-            beta = min(beta, value)
-            if alpha >= beta:
-                break
-        return column, value
-
-
-def drop_piece(board, row, col, piece):
-    board[row][col] = piece
+        return False
