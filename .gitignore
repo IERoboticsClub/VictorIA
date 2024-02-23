@@ -1,6 +1,7 @@
 /venv
 
 *.pyc
+settings.json
 
 boardDetection.py
 colorDetection.py
