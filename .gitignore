@@ -1,5 +1,5 @@
-/venv
-boardDetection.py
-colorDetection.py
-color_boardDetection.py
-minimax.py
+*/__pycache__/*
+*.pyc
+
+.vscode
+.DS_Store
